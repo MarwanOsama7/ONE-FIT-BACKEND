@@ -2,8 +2,10 @@ package com.global.ProjectManagement.Entity;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -47,7 +49,16 @@ public class Product extends BaseEntity<Long> implements Serializable{
 
 	@Transient
 	private double priceAfterdiscount;
+	
+	@Column(unique = true)
+	private String slug; // ✅ Slug field for friendly URLs
 
+	@Column(name = "meta_title")
+	private String metaTitle;
+
+	@Column(name = "meta_description")
+	private String metaDescription;
+	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "category_id")
 	@JsonBackReference(value = "category-product")
@@ -74,5 +85,19 @@ public class Product extends BaseEntity<Long> implements Serializable{
 		double discountAmount = (price * discount) / 100;
 		double discountedPrice = price - discountAmount;
 		this.setPriceAfterdiscount(discountedPrice);
+	}
+	
+	// ✅ Auto-generate slug from product name
+	public void generateSlug() {
+		this.slug = toSlug(this.name);
+	}
+
+	// ✅ Converts a string to a slug format
+	private String toSlug(String input) {
+		String slug = StringUtils.stripAccents(input) // Remove accents
+				.replaceAll("[^\\w\\s-]", "") // Remove non-word characters
+				.trim().replaceAll("\\s+", "-") // Replace spaces with hyphens
+				.toLowerCase(Locale.ENGLISH);
+		return slug;
 	}
 }

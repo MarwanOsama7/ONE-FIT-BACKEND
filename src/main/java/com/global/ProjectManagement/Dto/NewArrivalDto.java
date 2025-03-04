@@ -22,5 +22,8 @@ public class NewArrivalDto  implements Serializable{
     private Double price;
     private double discount;
     private Double priceAfterdiscount;
+    private String metaTitle;
+	private String metaDescription;
+	private String slug;
     private Set<ImageDataDto> images;
 }

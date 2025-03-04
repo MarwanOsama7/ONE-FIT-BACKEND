@@ -25,11 +25,12 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
 	Page<Product> findAllByDiscountIsNotNull(Pageable pageable);
 
 	
-    List<Product> findByNameContainingIgnoreCase(String name);
+    List<Product> findBySlugContainingIgnoreCase(String name);
 
     
 	Optional<Product> findByName(String name);
-
+	Optional<Product> findBySlug(String slug);
+	boolean existsBySlug(String slug);
     
 	
 	

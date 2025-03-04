@@ -3,11 +3,13 @@ package com.global.ProjectManagement.Controller;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.global.ProjectManagement.DTOs.PromoCodeDTO;
@@ -25,6 +27,12 @@ public class PromoCodeController {
 
 	private final PromoCodeServices service;
 	private final PromoCodeMapper mapper;
+
+	@GetMapping("/admin/promocodepaginate/findall")
+	public ResponseEntity<?> getPromoCode(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size) {
+		return ResponseEntity.ok(service.getPaginatedfindAll(page, size));
+	}
 
 	@PostMapping("/admin/promoCode/insert")
 	public ResponseEntity<?> insert(@RequestBody PromoCodeDTO dto) {
@@ -56,5 +64,14 @@ public class PromoCodeController {
 		PromoCodeResponse errorResponse = new PromoCodeResponse("Invalid or expired promo code", 0.0);
 		return ResponseEntity.badRequest().body(errorResponse);
 	}
-
+	
+	@DeleteMapping("/admin/promocode/{id}")
+	public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+		try {
+			service.deleteById(id);
+			return ResponseEntity.noContent().build(); // Return 204 No Content on successful deletion
+		} catch (Exception e) {
+			return ResponseEntity.notFound().build(); // Return 404 Not Found if the ID doesn't exist
+		}
+	}
 }

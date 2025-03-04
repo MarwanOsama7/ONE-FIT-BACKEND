@@ -27,4 +27,6 @@ public class Shipping extends BaseEntity<Long> implements Serializable{
 	private String name;
     private String numberOfDay;
     private double price;
+    
+    private boolean freeShipping;
 }

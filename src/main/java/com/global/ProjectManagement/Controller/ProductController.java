@@ -68,6 +68,11 @@ public class ProductController {
 		return ResponseEntity.ok(productService.getPaginatedfindAll(page, size));
 	}
 
+	@GetMapping("/admin/productsize/findbyproductid")
+	public ResponseEntity<?> getSizeStockByProductId(@RequestParam Long productId) {
+		return ResponseEntity.ok(productService.getSizeStockByProductId(productId));
+	}
+
 	@PostMapping("/admin/product/insert")
 	public ResponseEntity<?> insertProduct(@RequestParam("product") String productJson,
 			@RequestParam("productSizes") String productSizesJson,
@@ -84,7 +89,6 @@ public class ProductController {
 			return ResponseEntity.badRequest().body(null); // Invalid JSON format
 		}
 	}
-	
 
 	@GetMapping("/product/findbyname/{name}")
 	public ResponseEntity<?> findByName(@PathVariable String name) {
@@ -129,6 +133,14 @@ public class ProductController {
 		productService.deleteImagesById(id);
 		Map<String, String> response = new HashMap<>();
 		response.put("message", "Image deleted successfully for ID: " + id);
+		return ResponseEntity.ok(response);
+	}
+
+	@DeleteMapping("/admin/deleteProductById/{id}")
+	public ResponseEntity<?> deleteById(@PathVariable Long id) {
+		productService.deleteProduct(id);
+		Map<String, String> response = new HashMap<>();
+		response.put("message", "Product deleted successfully for ID: " + id);
 		return ResponseEntity.ok(response);
 	}
 }

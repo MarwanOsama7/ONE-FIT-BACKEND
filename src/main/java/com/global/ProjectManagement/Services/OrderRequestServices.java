@@ -216,7 +216,7 @@ public class OrderRequestServices {
 							createdTime, // Pass the separated time
 							entry.getKey().getCustomers().getUsername(), entry.getKey().getCustomers().getPhoneNumber(),
 							entry.getKey().getCustomers().getAddress(), entry.getKey().getCityOfOrder(),
-							entry.getValue());
+							entry.getKey().getPromoCode(), entry.getValue());
 				}).collect(Collectors.toList());
 
 		// Sort the grouped DTOs by status ID if needed (though all are -1)
@@ -257,7 +257,7 @@ public class OrderRequestServices {
 							createdTime, // Pass the separated time
 							entry.getKey().getCustomers().getUsername(), entry.getKey().getCustomers().getPhoneNumber(),
 							entry.getKey().getCustomers().getAddress(), entry.getKey().getCityOfOrder(),
-							entry.getValue());
+							entry.getKey().getPromoCode(), entry.getValue());
 				}).collect(Collectors.toList());
 
 		// Sort the grouped DTOs by status ID if needed (though all are -1)
@@ -266,7 +266,7 @@ public class OrderRequestServices {
 		return new PageImpl<>(groupedDtos, pageable, items.getTotalElements());
 	}
 
-	@Cacheable(value = "findOrder", key = "#root.methodName")
+//	@Cacheable(value = "findOrder", key = "#root.methodName")
 	public List<GroupedOrderDto> findByCodeOrPhoneNumber(String searchTerm) {
 		List<Orders> requestOrders = itemsRepository.findByCodeOrPhoneNumber(searchTerm);
 
@@ -292,7 +292,7 @@ public class OrderRequestServices {
 							createdTime, // Pass the separated time
 							entry.getKey().getCustomers().getUsername(), entry.getKey().getCustomers().getPhoneNumber(),
 							entry.getKey().getCustomers().getAddress(), entry.getKey().getCityOfOrder(),
-							entry.getValue());
+							entry.getKey().getPromoCode(), entry.getValue());
 				}).collect(Collectors.toList());
 
 	}

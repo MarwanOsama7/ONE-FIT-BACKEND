@@ -19,4 +19,5 @@ public class SizeDto implements Serializable{
 	private Long sizeId;
 	private String sizeValue;
 	private Integer stockQuantity;
+	private String variantId; // Unique identifier for each variant
 }

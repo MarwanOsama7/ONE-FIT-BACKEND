@@ -1,5 +1,6 @@
 package com.global.ProjectManagement.Dto;
 
+import java.io.Serializable;
 import java.util.List;
 
 
@@ -12,7 +13,11 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class GroupedOrderDto {
+public class GroupedOrderDto implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Long id;
 	private String requestOrderCode;
 	private int requestOrderTotalPrice;
@@ -24,5 +29,7 @@ public class GroupedOrderDto {
 	private String clientPhone;
 	private String clientAddress;
 	private String clientcity;
+	private String promoCode;
+
 	private List<GetItemDto> items;
 }

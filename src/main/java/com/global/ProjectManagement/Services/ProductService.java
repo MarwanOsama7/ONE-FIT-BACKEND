@@ -37,6 +37,7 @@ import com.global.ProjectManagement.Base.Services.BaseServices;
 import com.global.ProjectManagement.DTOs.ColorGroupedSizesDTO;
 import com.global.ProjectManagement.DTOs.ProductDTO;
 import com.global.ProjectManagement.DTOs.ProductSizeDTO;
+import com.global.ProjectManagement.DTOs.SizeStockDTO;
 import com.global.ProjectManagement.Dto.ImageDataDto;
 import com.global.ProjectManagement.Dto.NewArrivalDto;
 import com.global.ProjectManagement.Dto.ProductDto;
@@ -86,7 +87,8 @@ public class ProductService extends BaseServices<Product, Long> {
 
 			// Map product to DTO
 			return new ProductDto(product.getId(), product.getName(), product.getPrice(), product.getDiscount(),
-					product.getPriceAfterdiscount(), product.getCategoryType().getName(), images);
+					product.getPriceAfterdiscount(), product.getCategoryType().getName(), product.getMetaTitle(),
+					product.getMetaDescription(), product.getSlug(), images);
 		}).collect(Collectors.toList());
 
 		// Return a Page object with ProductDto
@@ -110,7 +112,8 @@ public class ProductService extends BaseServices<Product, Long> {
 
 			// Map product to DTO
 			return new ProductDto(product.getId(), product.getName(), product.getPrice(), product.getDiscount(),
-					product.getPriceAfterdiscount(), product.getCategoryType().getName(), images);
+					product.getPriceAfterdiscount(), product.getCategoryType().getName(), product.getMetaTitle(),
+					product.getMetaDescription(), product.getSlug(), images);
 		}).collect(Collectors.toList());
 
 		// Return a Page object with ProductDto
@@ -136,9 +139,9 @@ public class ProductService extends BaseServices<Product, Long> {
 //		}
 //	}
 
-	@Cacheable(value = "findProductsByName", key = "#name")
+	@Cacheable(value = "findProductsBySlug", key = "#name")
 	public List<ProductDTO> findProductsByName(String name) {
-		List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
+		List<Product> products = productRepository.findBySlugContainingIgnoreCase(name);
 
 		return products.stream().map(product -> {
 			// Map and sort images
@@ -153,9 +156,12 @@ public class ProductService extends BaseServices<Product, Long> {
 			// Group product sizes by colorName
 
 			Map<String, List<ProductSizeDTO>> sizesByColor = product.getProductSizes().stream()
-					.collect(Collectors.groupingBy(size -> size.getColor().getAttibutename(), Collectors.mapping(
-							size -> new ProductSizeDTO(size.getSize().getAttibutevalue(), size.getStockQuantity()),
-							Collectors.toList())));
+					.collect(
+							Collectors.groupingBy(size -> size.getColor().getAttibutename(),
+									Collectors.mapping(
+											size -> new ProductSizeDTO(size.getSize().getAttibutevalue(),
+													size.getStockQuantity(), size.getVariantId()),
+											Collectors.toList())));
 
 			// Transform sizesByColorName to the desired structure
 			List<ColorGroupedSizesDTO> groupedSizes = sizesByColor.entrySet().stream().map(entry -> {
@@ -174,7 +180,8 @@ public class ProductService extends BaseServices<Product, Long> {
 			}).collect(Collectors.toList());
 
 			return new ProductDTO(product.getId(), product.getName(), product.getDescription(), product.getPrice(),
-					product.getDiscount(), product.getPriceAfterdiscount(), images, groupedSizes);
+					product.getDiscount(), product.getPriceAfterdiscount(), product.getGender(), product.getMetaTitle(),
+					product.getMetaDescription(), product.getSlug(), images, groupedSizes);
 		}).collect(Collectors.toList());
 	}
 
@@ -184,18 +191,12 @@ public class ProductService extends BaseServices<Product, Long> {
 		Page<Product> productPage = productRepository.findAll(pageable);
 		productPage.getContent().forEach(product -> Hibernate.initialize(product.getImages()));
 		List<ProductDto> productDtoList = productPage.getContent().stream().map(product -> {
-			return new ProductDto(product.getName(), product.getGender(), product.getPrice(), product.getDiscount(),
-					product.getPriceAfterdiscount());
+			return new ProductDto(product.getId(), product.getName(), product.getGender(), product.getPrice(),
+					product.getDiscount(), product.getPriceAfterdiscount(), product.getMetaTitle(),
+					product.getMetaDescription(), product.getSlug());
 
 		}).collect(Collectors.toList());
 		return new PageImpl<>(productDtoList, pageable, productPage.getTotalElements());
-	}
-
-	public List<ImageDataDto> getImagesByProductId(Long productId) {
-		List<ProductImage> images = productImageRepository.findByProductId(productId);
-
-		return images.stream().map(ps -> new ImageDataDto(ps.getId(), ps.getImageUrl(), ps.getColor().getId()))
-				.collect(Collectors.toList());
 	}
 
 //	@Cacheable(value = "findByNameSearch", key = "#name")
@@ -217,8 +218,29 @@ public class ProductService extends BaseServices<Product, Long> {
 					.collect(Collectors.toCollection(LinkedHashSet::new));
 
 			return new NewArrivalDto(product.getId(), product.getName(), product.getPrice(), product.getDiscount(),
-					product.getPriceAfterdiscount(), images);
+					product.getPriceAfterdiscount(), product.getMetaTitle(), product.getMetaDescription(),
+					product.getSlug(), images);
 		}).collect(Collectors.toList());
+	}
+
+	// use stream for return specific data
+	@Cacheable(value = "getSizeStockByProductId", key = "#productId")
+	public List<SizeStockDTO> getSizeStockByProductId(Long productId) {
+		List<ProductSize> productSizes = productSizeRepository.findByProductIdWithFetch(productId);
+
+		return productSizes.stream()
+				.map(ps -> new SizeStockDTO(ps.getSize().getId(), ps.getSize().getAttibutevalue(),
+						ps.getStockQuantity(), ps.getProduct().getId(), ps.getColor().getId(),
+						ps.getColor().getAttibutename()))
+				.collect(Collectors.toList());
+	}
+
+	@Cacheable(value = "getImagesByProductId", key = "#productId")
+	public List<ImageDataDto> getImagesByProductId(Long productId) {
+		List<ProductImage> images = productImageRepository.findByProductId(productId);
+
+		return images.stream().map(ps -> new ImageDataDto(ps.getId(), ps.getImageUrl(), ps.getColor().getId()))
+				.collect(Collectors.toList());
 	}
 
 	// Helper to get the current username (example implementation)
@@ -227,7 +249,8 @@ public class ProductService extends BaseServices<Product, Long> {
 	}
 
 	@CacheEvict(value = { "getProductsByCategoryTypeName", "getProductsByCategoryName", "getNewArrivalsProducts",
-			"findProductByName", "getProductPaginatedfindAll" }, key = "#root.methodName", allEntries = true)
+			"findProductsBySlug", "getProductPaginatedfindAll", "getSizeStockByProductId",
+			"getImagesByProductId" }, key = "#root.methodName", allEntries = true)
 	public Product insertProductWithDetials(String productJson, String productSizesJson, MultipartFile[] images)
 			throws JsonMappingException, JsonProcessingException {
 
@@ -249,9 +272,13 @@ public class ProductService extends BaseServices<Product, Long> {
 			throw new DuplicateProductException("Product with name '" + product.getName() + "' and category '"
 					+ product.getCategory().getName() + "' already exists.");
 		}
+		// ✅ Generate slug before saving
+		product.generateSlug();
 
+		// ✅ Ensure unique slug
+		product.setSlug(generateUniqueSlug(product.getSlug()));
 		Product savedProduct = productRepository.save(product);
-		logService.logAction("CREATE_PRODUCT", "INFO", "Product saved successfully", getCurrentUsername(),
+		logService.logAction("CREATE_PRODUCT", "INFO", "Product Information saved successfully", getCurrentUsername(),
 				savedProduct.getId(), savedProduct.getName(), null);
 
 		processAndInsertSizes(productSize, savedProduct);
@@ -324,7 +351,8 @@ public class ProductService extends BaseServices<Product, Long> {
 	}
 
 	@CacheEvict(value = { "getProductsByCategoryTypeName", "getProductsByCategoryName", "getNewArrivalsProducts",
-			"findProductByName", "getProductPaginatedfindAll" }, key = "#root.methodName", allEntries = true)
+			"findProductsBySlug", "getProductPaginatedfindAll", "getSizeStockByProductId",
+			"getImagesByProductId" }, key = "#root.methodName", allEntries = true)
 	@Transactional
 	public Product updateProduct(Long id, ProductDto productDto) {
 		Product existingProduct = productRepository.findById(id)
@@ -335,12 +363,14 @@ public class ProductService extends BaseServices<Product, Long> {
 		existingProduct.setDiscount(productDto.getDiscount());
 		existingProduct.setGender(productDto.getGender());
 		existingProduct.setDescription(productDto.getDescription());
-
+		existingProduct.setMetaTitle(productDto.getMetaTitle());
+		existingProduct.setMetaDescription(productDto.getMetaDescription());
 		return productRepository.save(existingProduct);
 	}
 
 	@CacheEvict(value = { "getProductsByCategoryTypeName", "getProductsByCategoryName", "getNewArrivalsProducts",
-			"findProductById", "getProductPaginatedfindAll" }, key = "#root.methodName", allEntries = true)
+			"findProductById", "getProductPaginatedfindAll", "getSizeStockByProductId",
+			"findProductsBySlug" }, key = "#root.methodName", allEntries = true)
 	@Transactional
 	public void updateStockForMultipleSizes(Long productId, List<ProductSizeUpdateDto> sizeUpdates) {
 		// Fetch product once
@@ -386,6 +416,9 @@ public class ProductService extends BaseServices<Product, Long> {
 
 	}
 
+	@CacheEvict(value = { "getProductsByCategoryTypeName", "getProductsByCategoryName", "getNewArrivalsProducts",
+			"findProductsBySlug", "getProductPaginatedfindAll", "getSizeStockByProductId",
+			"getImagesByProductId" }, key = "#root.methodName", allEntries = true)
 	@Transactional
 	public void addNewImages(Long productId, MultipartFile[] newImages) {
 		Product product = productRepository.findById(productId)
@@ -404,21 +437,23 @@ public class ProductService extends BaseServices<Product, Long> {
 					.orElseThrow(() -> new RuntimeException("Color not found with id " + colorId));
 
 			// Upload the image and get the file path
-			Map<String, String> uploadResult = uploadFileService.storeFile(image, productId, "BriskShoes/" + colorId,
-					null);
+			Map<String, String> uploadResult = uploadFileService.storeFile(image, productId, "onefit/" + colorId, null);
 			String imageUrl = uploadResult.get("filePath");
 
 			// Create new ImageData and associate it with the product
 			ProductImage newImageData = ProductImage.builder().name(image.getOriginalFilename()).imageUrl(imageUrl)
 					.color(color).product(product).build();
-
 			// Save the new image
 			productImageRepository.save(newImageData);
+
+			logService.logAction("SAVE-NEW-IMAGES", "INFO", "Images Updated successfully", getCurrentUsername(),
+					product.getId(), product.getName(), null);
 		}
 	}
 
 	@CacheEvict(value = { "getProductsByCategoryTypeName", "getProductsByCategoryName", "getNewArrivalsProducts",
-			"findProductByName", "getProductPaginatedfindAll" }, key = "#root.methodName", allEntries = true)
+			"findProductsBySlug", "getProductPaginatedfindAll", "getSizeStockByProductId",
+			"getImagesByProductId" }, key = "#root.methodName", allEntries = true)
 	@Transactional
 	public void deleteImagesByProductId(Long productId) {
 		// Fetch the images by product ID
@@ -430,34 +465,68 @@ public class ProductService extends BaseServices<Product, Long> {
 
 			// Remove images from the file system
 			for (ProductImage image : images) {
+				logService.logAction("DELETE-IMAGE", "DELETE", "Images Deleted Successfully", getCurrentUsername(),
+						image.getId(), image.getImageUrl(), null);
 				String imageUrl = image.getImageUrl();
 				deleteFile(imageUrl); // Method to remove the file from storage
+
+				logService.logAction("DELETE-IMAGE", "DELETE", "Images Deleted From local Successfully",
+						getCurrentUsername(), image.getId(), image.getImageUrl(), null);
 			}
 		}
 	}
 
 	@CacheEvict(value = { "getProductsByCategoryTypeName", "getProductsByCategoryName", "getNewArrivalsProducts",
-			"findProductByName", "getProductPaginatedfindAll" }, key = "#root.methodName", allEntries = true)
+			"findProductsBySlug", "getProductPaginatedfindAll", "getSizeStockByProductId",
+			"getImagesByProductId" }, key = "#root.methodName", allEntries = true)
 	@Transactional
 	public void deleteImagesById(Long id) {
 		// Fetch the images by product ID
 		Optional<ProductImage> images = productImageRepository.findById(id);
 
 		if (!images.isEmpty()) {
+			logService.logAction("DELETE-IMAGE-BY-ID", "DELETE", "Image By ID Deleted Successfully",
+					getCurrentUsername(), images.get().getId(), images.get().getImageUrl(), null);
 			// Delete the images from the database
 			productImageRepository.deleteById(id);
 			String imageUrl = images.get().getImageUrl();
 			deleteFile(imageUrl);
+			logService.logAction("DELETE-IMAGE-BY-ID", "DELETE", "Image By ID Deleted From local Successfully",
+					getCurrentUsername(), images.get().getId(), images.get().getImageUrl(), null);
 		} else {
 			throw new RecordNotFoundException("the id not found");
 		}
+	}
+
+	@CacheEvict(value = { "getProductsByCategoryTypeName", "getProductsByCategoryName", "getNewArrivalsProducts",
+			"findProductsBySlug", "getProductPaginatedfindAll", "getSizeStockByProductId",
+			"getImagesByProductId" }, allEntries = true)
+	@Transactional
+	public void deleteProduct(Long productId) {
+		Product product = productRepository.findById(productId)
+				.orElseThrow(() -> new RecordNotFoundException("Product not found with ID: " + productId));
+
+		// Delete associated images from file system
+		Set<ProductImage> images = product.getImages();
+		for (ProductImage image : images) {
+			deleteFile(image.getImageUrl()); // Ensure this method deletes from storage
+			productImageRepository.delete(image); // Delete image record from DB
+		}
+
+		// Delete associated product sizes
+		// productSizeRepository.deleteByProductId(productId);
+
+		// Delete product itself
+		productRepository.deleteById(product.getId());
+		logService.logAction("DELETE-PRODUCT", "DELETE", "Images saved successfully", getCurrentUsername(),
+				product.getId(), product.getName(), null);
 	}
 
 	private void deleteFile(String imageUrl) {
 		try {
 			// Extract the file path from the image URL
 			String basePath = uploadFileService.getBasePath();
-			String relativeFilePath = imageUrl.replace("http://92.113.27.179/uploads/", ""); // Get the relative path
+			String relativeFilePath = imageUrl.replace("https://briskshop.store/uploads/", ""); // Get the relative path
 																								// from the URL
 			Path filePath = Paths.get(basePath, relativeFilePath);
 
@@ -467,4 +536,17 @@ public class ProductService extends BaseServices<Product, Long> {
 			throw new RuntimeException("Error deleting file from storage: " + imageUrl, e);
 		}
 	}
+
+	private String generateUniqueSlug(String slug) {
+		String uniqueSlug = slug;
+		int count = 1;
+
+		while (productRepository.existsBySlug(uniqueSlug)) {
+			uniqueSlug = slug + "-" + count;
+			count++;
+		}
+
+		return uniqueSlug;
+	}
+
 }

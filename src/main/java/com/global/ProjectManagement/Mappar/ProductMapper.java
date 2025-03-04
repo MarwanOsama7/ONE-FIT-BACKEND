@@ -41,7 +41,7 @@ public interface ProductMapper extends BaseMap<Product, ProductDto> {
 	default List<ProductSizeDto> mergeProductSizes(Set<ProductSize> productSizes) {
 		Map<Long, List<SizeDto>> mergedMap = productSizes.stream()
 				.collect(Collectors.groupingBy(ps -> ps.getColor().getId(), Collectors.mapping(
-						ps -> new SizeDto(ps.getSize().getId(), ps.getSize().getAttibutevalue(), ps.getStockQuantity()),
+						ps -> new SizeDto(ps.getSize().getId(), ps.getSize().getAttibutevalue(), ps.getStockQuantity(),ps.getVariantId()),
 						Collectors.toList())));
 
 		return mergedMap.entrySet().stream().map(entry -> {

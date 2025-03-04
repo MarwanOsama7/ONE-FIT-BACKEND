@@ -11,16 +11,15 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PromoCodeDTO implements Serializable {
+public class SizeStockDTO implements Serializable{
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
-	private Long id ;
-	private String promoCode;
-	private double promoDiscount;
-	private boolean isActive;
-	private int usageLimit; // Limit number of uses
-    private int usedCount;
+	private Long sizeId;
+    private String sizeValue;
+    private Integer stockQuantity;
+    private Long productId;
+    private Long colorId;
+    private String colorValue; // New field for color value (e.g., color name)
 }
