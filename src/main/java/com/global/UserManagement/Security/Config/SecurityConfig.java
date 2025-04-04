@@ -80,8 +80,9 @@ public class SecurityConfig {
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(Arrays.asList("https://briskshop.net", "http://localhost:4200",
-				"https://admin.briskshop.net", "https://onefit.briskshop.net"));
+		configuration.setAllowedOrigins(
+				Arrays.asList("https://briskshop.net", "http://localhost:4200", "https://admin.briskshop.net",
+						"https://onefit.briskshop.net", "https://darkorchid-badger-283713.hostingersite.com"));
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
 		configuration.setAllowCredentials(true);

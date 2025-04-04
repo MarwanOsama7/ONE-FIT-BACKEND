@@ -10,7 +10,7 @@ public class WConfig implements WebMvcConfigurer {
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**")
 				.allowedOrigins("https://briskshop.net", "http://localhost:4200", "https://admin.briskshop.net",
-						"https://onefit.briskshop.net")
+						"https://onefit.briskshop.net", "https://darkorchid-badger-283713.hostingersite.com")
 				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 				.allowedHeaders("Authorization", "Content-Type", "Accept").allowCredentials(true).maxAge(3600); // Cache
 																												// the
